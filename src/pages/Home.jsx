@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import CountryCard from '../components/CountryCard';
 import { db, auth } from '../Firebase.js' //  Firebase auth + db
-import { ref, set, get } from 'firebase/database';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 const Home = () => {
     const [countries, setCountries] = useState([]);
@@ -43,14 +43,14 @@ const Home = () => {
     // 2. Load favorites from Firebase
     useEffect(() => {
         if (user) {
-            const favRef = ref(db, `favorites/${user.uid}`);
-            get(favRef)
-                .then((snapshot) => {
-                    if (snapshot.exists()) {
-                        setFavorites(snapshot.val());
+            const favRef = doc(db, 'favorites', user.uid);
+            getDoc(favRef)
+                .then((docSnap) => {
+                    if (docSnap.exists()) {
+                        setFavorites(docSnap.data().items || []);
                     }
                 })
-                .catch((err) => console.error("Error loading favorites:", err));
+                .catch((err) => console.error('Error loading favorites:', err));
         }
     }, [user]);
 
@@ -67,8 +67,10 @@ const Home = () => {
 
         setFavorites(updated);
         if (user) {
-            set(ref(db, `favorites/${user.uid}`), updated)
-                .catch(err => console.error("Error saving favorites:", err));
+            const favRef = doc(db, 'favorites', user.uid);
+            setDoc(favRef, { items: updated }).catch((err) =>
+                console.error('Error saving favorites:', err)
+            );
         }
     };
 
