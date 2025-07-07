@@ -1,15 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import CountryCard from '../components/CountryCard';
-import {data} from "autoprefixer";
+import { db, auth } from '../Firebase.js' //  Firebase auth + db
+import { ref, set, get } from 'firebase/database';
 
 const Home = () => {
     const [countries, setCountries] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [favorites, setFavorites] = useState([]);
     const [selectedRegion, setSelectedRegion] = useState('All');
     const [selectedLanguage, setSelectedLanguage] = useState('All');
+    const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
     const [error, setError] = useState(null);
     const [languages, setLanguages] = useState([]);
+    const user = auth.currentUser;
 
     useEffect(() => {
         axios
@@ -36,6 +40,37 @@ const Home = () => {
                 setError('Failed to load countries. Please try again later.');
             });
     }, []);
+    // 2. Load favorites from Firebase
+    useEffect(() => {
+        if (user) {
+            const favRef = ref(db, `favorites/${user.uid}`);
+            get(favRef)
+                .then((snapshot) => {
+                    if (snapshot.exists()) {
+                        setFavorites(snapshot.val());
+                    }
+                })
+                .catch((err) => console.error("Error loading favorites:", err));
+        }
+    }, [user]);
+
+// Toggle favorite
+    const toggleFavorite = (country) => {
+        const isFavorite = favorites.some((fav) => fav.name.common === country.name.common);
+        let updated = [];
+
+        if (isFavorite) {
+            updated = favorites.filter(fav => fav.name.common !== country.name.common);
+        } else {
+            updated = [...favorites, country];
+        }
+
+        setFavorites(updated);
+        if (user) {
+            set(ref(db, `favorites/${user.uid}`), updated)
+                .catch(err => console.error("Error saving favorites:", err));
+        }
+    };
 
     //Filter logic (by name and region)
     const filteredCountries = countries.filter((country) =>{
@@ -46,6 +81,7 @@ const Home = () => {
             (country.languages && Object.values(country.languages).includes(selectedLanguage));
         return matchesName && matchesRegion && matchesLanguage;
         });
+    const displayList = showFavoritesOnly ? favorites : filteredCountries;
     //  Available region options (you can customize this list)
     const regions = ['All', 'Africa', 'Americas', 'Asia', 'Europe', 'Oceania', 'Antarctic'];
 
@@ -82,13 +118,20 @@ const Home = () => {
                         </option>
                     ))}
                 </select>
+                <button
+                    onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded"
+                >
+                    {showFavoritesOnly ? "Show All" : "Show Favorites"}
+                </button>
             </div>
 
             {error && <p className="text-red-500">{error}</p>}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                {filteredCountries.map((country) => (
-                    <CountryCard key={country.name.common} country={country} />
+                {displayList.map((country) => (
+                    <CountryCard key={country.name.common} country={country} isFavorite={favorites.some((fav) => fav.name.common === country.name.common)}
+                                 toggleFavorite={toggleFavorite} />
                 ))}
             </div>
         </div>
