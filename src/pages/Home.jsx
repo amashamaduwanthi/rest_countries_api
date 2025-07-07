@@ -4,6 +4,7 @@ import CountryCard from '../components/CountryCard';
 
 const Home = () => {
     const [countries, setCountries] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [error, setError] = useState(null);
 
     useEffect(() => {
@@ -18,15 +19,28 @@ const Home = () => {
             });
     }, []);
 
+    // Filter countries based on search input
+    const filteredCountries = countries.filter((country) =>
+        country.name.common.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <div className="p-6 bg-gray-100 min-h-screen">
             <h1 className="text-3xl font-bold mb-6">REST Countries Explorer</h1>
 
+            <input
+                type="text"
+                placeholder="Search by country name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="mb-6 px-4 py-2 border rounded w-full sm:w-1/2"
+            />
+
             {error && <p className="text-red-500">{error}</p>}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                {countries.map((country, index) => (
-                    <CountryCard key={index} country={country} />
+                {filteredCountries.map((country) => (
+                    <CountryCard key={country.name.common} country={country} />
                 ))}
             </div>
         </div>
