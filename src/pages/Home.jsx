@@ -3,6 +3,9 @@ import axios from 'axios';
 import CountryCard from '../components/CountryCard';
 import { db, auth } from '../Firebase.js' //  Firebase auth + db
 import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { useNavigate } from 'react-router-dom';
+import toast, { Toaster } from 'react-hot-toast';
 
 const Home = () => {
     const [countries, setCountries] = useState([]);
@@ -13,7 +16,21 @@ const Home = () => {
     const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
     const [error, setError] = useState(null);
     const [languages, setLanguages] = useState([]);
-    const user = auth.currentUser;
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
+
+    // Track auth state
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            if (!currentUser) {
+                navigate('/login');
+            } else {
+                setUser(currentUser);
+            }
+        });
+        return () => unsubscribe();
+    }, []);
 
     useEffect(() => {
         axios
@@ -61,8 +78,10 @@ const Home = () => {
 
         if (isFavorite) {
             updated = favorites.filter(fav => fav.name.common !== country.name.common);
+            toast('Removed from favorites');
         } else {
             updated = [...favorites, country];
+            toast.success('Added to favorites!');
         }
 
         setFavorites(updated);
@@ -87,9 +106,24 @@ const Home = () => {
     //  Available region options (you can customize this list)
     const regions = ['All', 'Africa', 'Americas', 'Asia', 'Europe', 'Oceania', 'Antarctic'];
 
+    const handleLogout = () => {
+        signOut(auth).then(() => {
+            navigate('/login');
+        });
+    };
+
     return (
         <div className="p-6 bg-gray-100 min-h-screen">
-            <h1 className="text-3xl font-bold mb-6">REST Countries Explorer</h1>
+            <Toaster position="top-right" />
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold">🌍 REST Countries Explorer</h1>
+                <button
+                    onClick={handleLogout}
+                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                >
+                    Logout
+                </button>
+            </div>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <input
                 type="text"
