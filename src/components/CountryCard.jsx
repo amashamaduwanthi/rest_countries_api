@@ -16,7 +16,7 @@ const CountryCard = ({ country }) => {
             <p>Capital: {country.capital?.[0] || 'N/A'}</p>
             <p>Region: {country.region}</p>
             <p>Population: {country.population.toLocaleString()}</p>
-            <p>Languages: {languageNames}</p>
+            <p>Languages: {country.languages && Object.values(country.languages).join(', ')}</p>
         </div>
     );
 };

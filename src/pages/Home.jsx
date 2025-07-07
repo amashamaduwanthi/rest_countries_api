@@ -1,18 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import CountryCard from '../components/CountryCard';
+import {data} from "autoprefixer";
 
 const Home = () => {
     const [countries, setCountries] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRegion, setSelectedRegion] = useState('All');
+    const [selectedLanguage, setSelectedLanguage] = useState('All');
     const [error, setError] = useState(null);
+    const [languages, setLanguages] = useState([]);
 
     useEffect(() => {
         axios
             .get('https://restcountries.com/v3.1/all?fields=name,capital,region,population,languages,flags')
             .then((res) => {
-                setCountries(res.data);
+                const data = res.data;
+
+                if (!Array.isArray(data)) {
+                    throw new Error('Invalid response format');
+                }
+                setCountries(data);
+
+                //  Extract all languages and make them unique
+                const languageSet = new Set();
+                data.forEach((country) => {
+                    if (country.languages) {
+                        Object.values(country.languages).forEach((lang) => languageSet.add(lang));
+                    }
+                });
+                setLanguages(['All', ...Array.from(languageSet).sort()]);
             })
             .catch((err) => {
                 console.error('Error fetching countries:', err);
@@ -24,7 +41,10 @@ const Home = () => {
     const filteredCountries = countries.filter((country) =>{
         const matchesName = country.name.common.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesRegion = selectedRegion === 'All' || country.region === selectedRegion;
-        return matchesName && matchesRegion;
+        const matchesLanguage =
+            selectedLanguage === 'All' ||
+            (country.languages && Object.values(country.languages).includes(selectedLanguage));
+        return matchesName && matchesRegion && matchesLanguage;
         });
     //  Available region options (you can customize this list)
     const regions = ['All', 'Africa', 'Americas', 'Asia', 'Europe', 'Oceania', 'Antarctic'];
@@ -48,6 +68,17 @@ const Home = () => {
                     {regions.map((region) => (
                         <option key={region} value={region}>
                             {region}
+                        </option>
+                    ))}
+                </select>
+                <select
+                    value={selectedLanguage}
+                    onChange={(e) => setSelectedLanguage(e.target.value)}
+                    className="px-4 py-2 border rounded"
+                >
+                    {languages.map((lang) => (
+                        <option key={lang} value={lang}>
+                            🗣️ {lang}
                         </option>
                     ))}
                 </select>
