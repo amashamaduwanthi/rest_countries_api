@@ -7,10 +7,11 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "jest --config=jest.config.mjs"
   },
   "dependencies": {
+    "@testing-library/react": "^16.3.0",
     "axios": "^1.10.0",
     "firebase": "^11.10.0",
     "react": "^19.1.0",
@@ -23,8 +24,7 @@
     "@babel/preset-react": "^7.27.1",
     "@eslint/js": "^9.29.0",
     "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.3.0",
-    "@testing-library/user-event": "^14.6.1",
+    "@types/jest": "^30.0.0",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.5.2",
@@ -37,7 +37,9 @@
     "jest": "^30.0.4",
     "jest-environment-jsdom": "^30.0.4",
     "postcss": "^8.5.6",
+    "react-test-renderer": "^19.1.0",
     "tailwindcss": "^3.4.17",
+    "ts-jest": "^29.4.0",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.34.1",
     "vite": "^7.0.0"
